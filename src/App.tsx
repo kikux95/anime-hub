@@ -817,7 +817,7 @@ function DinoCodex() {
   const filtered = regimeFilter === "Tout"
     ? dinos
     : dinos.filter(d => d.regime === regimeFilter || d.ere === regimeFilter);
-  const getFilterColor = (f: string) => dietColor[f] || ereColor[f] || "#888";
+  
 
   return (
     <div>
