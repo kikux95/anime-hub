@@ -383,10 +383,9 @@ function DetailModal({ open, onClose, title, subtitle, image, imagePlaceholder =
           background: image ? "#000" : `${accentColor}15`,
           position: "relative", borderRadius: "16px 16px 0 0", overflow: "hidden",
           display: "flex", alignItems: "center", justifyContent: "center",
-          minHeight: image ? 320 : 110,
         }}>
           {image
-            ? <img src={image} alt={title} style={{ width: "100%", maxHeight: 420, objectFit: "contain", display: "block" }} />
+            ? <img src={image} alt={title} style={{ width: "100%", display: "block", objectFit: "cover" }} />
             : <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 110, fontSize: 64 }}>{imagePlaceholder}</div>}
           {/* Dégradé subtil en bas uniquement si image */}
           {image && <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 60, background: "linear-gradient(transparent, #13101f)" }} />}
@@ -1323,6 +1322,8 @@ function Createur() {
   const [editId, setEditId] = useState<string|null>(null);
   const [newPouvoir, setNewPouvoir] = useState("");
   const [niveauFilter, setNiveauFilter] = useState<string>("Tout");
+  const [roleFilter, setRoleFilter] = useState<string>("Tout");
+  const [searchPerso, setSearchPerso] = useState<string>("");
   const [modalPerso, setModalPerso] = useState<Perso|null>(null);
 
   useEffect(()=>{ localStorage.setItem("persos", JSON.stringify(persos)); }, [persos]);
@@ -1553,7 +1554,15 @@ function Createur() {
         const allNiveaux = ["Ordinaire","Intermédiaire","Avancé","Élite","Légendaire","DIEU"];
         const niveauColors: Record<string,string> = { "Ordinaire":"#6b7280","Intermédiaire":"#22c55e","Avancé":"#3b82f6","Élite":"#f59e0b","Légendaire":"#a855f7","DIEU":"#ef4444" };
         const usedNiveaux = allNiveaux.filter(n => persos.some(p => powerLabel(p.score).label === n));
-        const filteredPersos = niveauFilter === "Tout" ? persos : persos.filter(p => powerLabel(p.score).label === niveauFilter);
+        const filteredPersos = persos.filter(p => {
+          if (niveauFilter !== "Tout" && powerLabel(p.score).label !== niveauFilter) return false;
+          if (roleFilter !== "Tout" && p.role !== roleFilter) return false;
+          if (searchPerso.trim()) {
+            const q = searchPerso.trim().toLowerCase();
+            if (!p.nom.toLowerCase().includes(q) && !(p.nom_heros||"").toLowerCase().includes(q) && !p.types.join(" ").toLowerCase().includes(q) && !(p.description||"").toLowerCase().includes(q)) return false;
+          }
+          return true;
+        });
         return (
           <>
             {persos.length > 0 && usedNiveaux.length > 0 && (
@@ -1578,17 +1587,45 @@ function Createur() {
                 </div>
               </div>
             )}
+            {/* Barre de recherche */}
+            {persos.length > 0 && <SearchBar value={searchPerso} onChange={setSearchPerso} placeholder="Rechercher par nom, alias, pouvoir..." />}
+
+            {/* Filtre par rôle */}
+            {persos.length > 0 && (
+              <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:14 }}>
+                {([
+                  { key:"Tout", label:"Tous", color:"#f43f5e", emoji:"👥" },
+                  { key:"hero", label:"Héros", color:"#22c55e", emoji:"🦸" },
+                  { key:"vilain", label:"Vilains", color:"#ef4444", emoji:"💀" },
+                  { key:"civil", label:"Civils", color:"#3b82f6", emoji:"🧑" },
+                ] as const).map(r => {
+                  const active = roleFilter === r.key;
+                  return (
+                    <button key={r.key} onClick={()=>setRoleFilter(r.key)} style={{ background: active ? r.color+"22" : "#ffffff08", border: active ? `1.5px solid ${r.color}` : "1px solid #ffffff20", borderRadius:20, padding:"5px 14px", color: active ? r.color : "#888", cursor:"pointer", fontSize:13, fontWeight: active ? 700 : 400, display:"flex", alignItems:"center", gap:5, outline:"none" }}>
+                      {r.emoji} {r.label}
+                      {r.key !== "Tout" && <span style={{ background: active ? r.color+"33" : "#ffffff10", borderRadius:10, padding:"1px 7px", fontSize:11, fontWeight:700, color: active ? r.color : "#666", marginLeft:2 }}>
+                        {persos.filter(p=>p.role===r.key).length}
+                      </span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {filteredPersos.length===0
-              ? <p style={{ color:"#666", textAlign:"center", marginTop:40 }}>{niveauFilter!=="Tout"?`Aucun personnage de niveau "${niveauFilter}".`:"Aucun personnage. Crée ton premier guerrier !"}</p>
+              ? <p style={{ color:"#666", textAlign:"center", marginTop:40 }}>{searchPerso || niveauFilter!=="Tout" || roleFilter!=="Tout" ? "Aucun personnage trouvé." :"Aucun personnage. Crée ton premier guerrier !"}</p>
               : <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(200px,1fr))", gap:14 }}>
                   {filteredPersos.map(p=>{
                     const inf = powerLabel(p.score);
                     return (
                       <div key={p.id} style={{ background:`linear-gradient(160deg, #1a0010 0%, #0d0008 100%)`, border:`1.5px solid ${inf.color}44`, borderRadius:14, overflow:"hidden" }}>
-                        <div style={{ height:120, background:p.image?"none":`${inf.color}11`, position:"relative" }}>
-                          {p.image ? <img src={p.image} alt={p.nom} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-                            : <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100%", fontSize:40 }}>{p.role==="hero"?"🦸":p.role==="vilain"?"💀":"🧑"}</div>}
-                          <div style={{ position:"absolute", bottom:0, left:0, right:0, height:40, background:"linear-gradient(transparent,#0d0008)" }} />
+                        {/* Zone image : hauteur naturelle, défile avec la carte */}
+                        <div style={{ position:"relative", background:p.image?"#000":`${inf.color}11` }}>
+                          {p.image
+                            ? <img src={p.image} alt={p.nom} style={{ width:"100%", display:"block", objectFit:"cover" }} />
+                            : <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:140, fontSize:60 }}>{p.role==="hero"?"🦸":p.role==="vilain"?"💀":"🧑"}</div>}
+                          {/* Dégradé bas */}
+                          {p.image && <div style={{ position:"absolute", bottom:0, left:0, right:0, height:50, background:"linear-gradient(transparent,#0d0008)" }} />}
                           {/* Badge rôle en haut à gauche */}
                           <div style={{ position:"absolute", top:6, left:6 }}>
                             {p.role==="hero" && <span style={{ background:"#22c55e33", border:"1px solid #22c55e88", borderRadius:6, padding:"2px 7px", fontSize:10, fontWeight:700, color:"#22c55e" }}>🦸 HÉROS</span>}
