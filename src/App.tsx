@@ -207,6 +207,7 @@ function ImageUploader({ value, onChange, label="Image (optionnel)" }: { value: 
   const fileRef = useRef<HTMLInputElement>(null);
   const [urlInput, setUrlInput] = useState("");
   const [mode, setMode] = useState<"file"|"url">("file");
+  const [showGithubHelp, setShowGithubHelp] = useState(false);
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -225,19 +226,57 @@ function ImageUploader({ value, onChange, label="Image (optionnel)" }: { value: 
   return (
     <div style={{ marginBottom: 12 }}>
       <label style={{ fontSize: 12, color: "#aaa", display: "block", marginBottom: 6 }}>{label}</label>
-      <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+
+      <div style={{ display: "flex", gap: 6, marginBottom: 8, flexWrap:"wrap" }}>
         <button onClick={()=>setMode("file")} style={{ background: mode==="file"?"#7c3aed33":"#ffffff10", border:`1px solid ${mode==="file"?"#7c3aed":"#ffffff20"}`, borderRadius: 6, padding: "4px 12px", color: mode==="file"?"#a78bfa":"#aaa", cursor:"pointer", fontSize:12 }}>📁 Fichier</button>
         <button onClick={()=>setMode("url")} style={{ background: mode==="url"?"#7c3aed33":"#ffffff10", border:`1px solid ${mode==="url"?"#7c3aed":"#ffffff20"}`, borderRadius: 6, padding: "4px 12px", color: mode==="url"?"#a78bfa":"#aaa", cursor:"pointer", fontSize:12 }}>🔗 URL</button>
+        <button onClick={()=>setShowGithubHelp(v=>!v)} style={{ background: showGithubHelp?"#23863633":"#ffffff08", border:`1px solid ${showGithubHelp?"#238636":"#ffffff15"}`, borderRadius: 6, padding: "4px 12px", color: showGithubHelp?"#3fb950":"#666", cursor:"pointer", fontSize:12, display:"flex", alignItems:"center", gap:5 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          Stocker sur GitHub
+        </button>
       </div>
+
+      {/* Panneau d'aide GitHub */}
+      {showGithubHelp && (
+        <div style={{ background:"#0d1117", border:"1px solid #238636", borderRadius:10, padding:"14px 16px", marginBottom:10, fontSize:12 }}>
+          <div style={{ fontWeight:700, color:"#3fb950", marginBottom:10, display:"flex", alignItems:"center", gap:6, fontSize:13 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            Héberger ses images gratuitement sur GitHub
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:8, color:"#cdd9e5" }}>
+            <div style={{ display:"flex", gap:8 }}>
+              <span style={{ background:"#238636", borderRadius:"50%", width:18, height:18, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, fontWeight:700, fontSize:10, color:"#fff" }}>1</span>
+              <span>Va sur <a href="https://github.com/new" target="_blank" rel="noreferrer" style={{ color:"#58a6ff" }}>github.com/new</a> → crée un repo <strong style={{color:"#e6edf3"}}>public</strong> nommé <code style={{background:"#161b22",borderRadius:4,padding:"1px 6px",color:"#79c0ff"}}>anime-hub-images</code></span>
+            </div>
+            <div style={{ display:"flex", gap:8 }}>
+              <span style={{ background:"#238636", borderRadius:"50%", width:18, height:18, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, fontWeight:700, fontSize:10, color:"#fff" }}>2</span>
+              <span>Dans le repo → <strong style={{color:"#e6edf3"}}>Add file → Upload files</strong> → glisse ton image → Commit</span>
+            </div>
+            <div style={{ display:"flex", gap:8 }}>
+              <span style={{ background:"#238636", borderRadius:"50%", width:18, height:18, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, fontWeight:700, fontSize:10, color:"#fff" }}>3</span>
+              <span>Clique sur l'image → bouton <strong style={{color:"#e6edf3"}}>Raw</strong> en haut à droite → copie l'URL</span>
+            </div>
+            <div style={{ display:"flex", gap:8 }}>
+              <span style={{ background:"#238636", borderRadius:"50%", width:18, height:18, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, fontWeight:700, fontSize:10, color:"#fff" }}>4</span>
+              <span>Reviens ici → onglet <strong style={{color:"#e6edf3"}}>🔗 URL</strong> → colle l'URL qui ressemble à :<br/><code style={{background:"#161b22",borderRadius:4,padding:"2px 7px",color:"#79c0ff",fontSize:11,display:"inline-block",marginTop:4}}>https://raw.githubusercontent.com/TON_PSEUDO/anime-hub-images/main/perso.jpg</code></span>
+            </div>
+          </div>
+          <div style={{ marginTop:10, background:"#1f2d1f", border:"1px solid #2ea04355", borderRadius:7, padding:"7px 10px", color:"#7ee787", fontSize:11 }}>
+            ✅ Les URLs GitHub ne prennent <strong>aucune place</strong> dans le stockage local → plus jamais de crash !
+          </div>
+        </div>
+      )}
+
       {mode==="file" ? (
         <div onClick={() => fileRef.current?.click()} style={{ border: "2px dashed #ffffff25", borderRadius: 8, padding: "16px", textAlign:"center", cursor:"pointer", background:"#ffffff05" }}>
           <div style={{ fontSize: 24, marginBottom: 4 }}>🖼️</div>
           <div style={{ fontSize: 12, color: "#888" }}>Cliquer pour choisir une image</div>
+          <div style={{ fontSize: 11, color: "#ef4444aa", marginTop: 4 }}>⚠️ Fichier local = stocké en mémoire, risque de crash</div>
           <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display:"none" }} />
         </div>
       ) : (
         <div style={{ display:"flex", gap:6 }}>
-          <input value={urlInput} onChange={e=>setUrlInput(e.target.value)} placeholder="https://..." style={{ flex:1, background:"#ffffff0f", border:"1px solid #ffffff20", borderRadius:8, padding:"8px 12px", color:"#eee", fontSize:13 }} />
+          <input value={urlInput} onChange={e=>setUrlInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleUrl()} placeholder="https://raw.githubusercontent.com/..." style={{ flex:1, background:"#ffffff0f", border:"1px solid #ffffff20", borderRadius:8, padding:"8px 12px", color:"#eee", fontSize:13 }} />
           <button onClick={handleUrl} style={{ background:"#7c3aed", border:"none", borderRadius:8, color:"#fff", padding:"8px 14px", cursor:"pointer", fontSize:13 }}>OK</button>
         </div>
       )}
@@ -245,6 +284,7 @@ function ImageUploader({ value, onChange, label="Image (optionnel)" }: { value: 
         <div style={{ marginTop: 8, position:"relative", display:"inline-block" }}>
           <img src={value} alt="preview" style={{ width:80, height:80, objectFit:"cover", borderRadius:8, border:"1px solid #ffffff20" }} />
           <button onClick={()=>onChange("")} style={{ position:"absolute", top:-6, right:-6, background:"#ef4444", border:"none", borderRadius:"50%", color:"#fff", width:18, height:18, cursor:"pointer", fontSize:11, lineHeight:"18px", textAlign:"center" }}>✕</button>
+          {value.startsWith("data:") && <div style={{ fontSize:10, color:"#ef4444aa", marginTop:4, maxWidth:80, textAlign:"center", lineHeight:1.3 }}>⚠️ Fichier local</div>}
         </div>
       )}
     </div>
@@ -423,7 +463,7 @@ function CartePerso() {
   const [animeFilter, setAnimeFilter] = useState<string>("Tout");
   const [modalCarte, setModalCarte] = useState<Carte|null>(null);
 
-  useEffect(()=>{ localStorage.setItem("cartes", JSON.stringify(cartes)); }, [cartes]);
+  useEffect(()=>{ try { localStorage.setItem("cartes", JSON.stringify(cartes)); } catch { try { localStorage.setItem("cartes", JSON.stringify(cartes.map(c=>({...c,image:c.image?.startsWith("data:")?"":c.image})))); } catch {} } }, [cartes]);
 
   const set = (k: string) => (v: string) => setForm(f=>({ ...f, [k]:v }));
 
@@ -634,7 +674,7 @@ function Arsenal() {
   const [typeFilter, setTypeFilter] = useState<string>("Tout");
   const [modalArme, setModalArme] = useState<Arme|null>(null);
 
-  useEffect(()=>{ localStorage.setItem("armes", JSON.stringify(armes)); }, [armes]);
+  useEffect(()=>{ try { localStorage.setItem("armes", JSON.stringify(armes)); } catch { try { localStorage.setItem("armes", JSON.stringify(armes.map(a=>({...a,image:a.image?.startsWith("data:")?"":a.image})))); } catch {} } }, [armes]);
 
   const set = (k:string)=>(v:string)=>setForm(f=>({...f,[k]:v}));
 
@@ -794,7 +834,7 @@ function DinoCodex() {
   const [regimeFilter, setRegimeFilter] = useState<string>("Tout");
   const [modalDino, setModalDino] = useState<Dino|null>(null);
 
-  useEffect(()=>{ localStorage.setItem("dinos", JSON.stringify(dinos)); }, [dinos]);
+  useEffect(()=>{ try { localStorage.setItem("dinos", JSON.stringify(dinos)); } catch { try { localStorage.setItem("dinos", JSON.stringify(dinos.map(d=>({...d,image:d.image?.startsWith("data:")?"":d.image})))); } catch {} } }, [dinos]);
   const set = (k:string)=>(v:string)=>setForm(f=>({...f,[k]:v}));
   const dietColor: Record<string,string> = { Carnivore:"#ef4444", Herbivore:"#22c55e", Omnivore:"#f59e0b" };
   const ereColor: Record<string,string> = { Trias:"#8b5cf6", Jurassique:"#3b82f6", Crétacé:"#f59e0b" };
@@ -987,7 +1027,7 @@ function MesAnimes() {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [modalAnime, setModalAnime] = useState<Anime|null>(null);
 
-  useEffect(()=>{ localStorage.setItem("animes", JSON.stringify(animes)); }, [animes]);
+  useEffect(()=>{ try { localStorage.setItem("animes", JSON.stringify(animes)); } catch { try { localStorage.setItem("animes", JSON.stringify(animes.map(a=>({...a,image:a.image?.startsWith("data:")?"":a.image})))); } catch {} } }, [animes]);
   const set = (k:string)=>(v:string)=>setForm(f=>({...f,[k]:v}));
 
   const searchOnline = async () => {
@@ -1326,7 +1366,10 @@ function Createur() {
   const [searchPerso, setSearchPerso] = useState<string>("");
   const [modalPerso, setModalPerso] = useState<Perso|null>(null);
 
-  useEffect(()=>{ localStorage.setItem("persos", JSON.stringify(persos)); }, [persos]);
+  useEffect(()=>{
+    try { localStorage.setItem("persos", JSON.stringify(persos)); }
+    catch { try { localStorage.setItem("persos", JSON.stringify(persos.map(p=>({...p,image:p.image?.startsWith("data:")?"":p.image})))); } catch {} }
+  }, [persos]);
 
   const score = calculatePower(form);
   const info = powerLabel(score);
