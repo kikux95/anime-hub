@@ -817,7 +817,7 @@ function DinoCodex() {
   const filtered = regimeFilter === "Tout"
     ? dinos
     : dinos.filter(d => d.regime === regimeFilter || d.ere === regimeFilter);
-  
+  const getFilterColor = (f: string) => dietColor[f] || ereColor[f] || "#888";
 
   return (
     <div>
@@ -1274,11 +1274,20 @@ function MesAnimes() {
 }
 
 // ── SECTION 5 : Créateur de Puissance ────────────────────────────────────────
+const DANGER_RANKS = ["E","D","C","B","A","S","SS","SSS"] as const;
+type DangerRank = typeof DANGER_RANKS[number];
+type PersonnageRole = "hero"|"civil"|"vilain";
+
+const dangerRankColor: Record<DangerRank,string> = {
+  E:"#6b7280", D:"#22c55e", C:"#3b82f6", B:"#a855f7", A:"#f59e0b", S:"#ef4444", SS:"#ec4899", SSS:"#ff0055"
+};
+
 interface Perso {
   id: string; nom: string; types: string[]; nb_pouvoirs: number; portee: number;
   controle: number; destruction: number; vitesse: number; regen: number;
   limite: number; description: string; score: number; image: string;
   pouvoirs_custom: string[]; description_pouvoirs: string;
+  role: PersonnageRole; nom_heros: string; danger_rank: DangerRank;
 }
 
 function calculatePower(form: Omit<Perso,"id"|"score">): number {
@@ -1305,7 +1314,7 @@ function powerLabel(n: number) {
 }
 
 function Createur() {
-  const emptyForm = { nom:"", types:[] as string[], nb_pouvoirs:1, portee:5, controle:5, destruction:5, vitesse:5, regen:3, limite:5, description:"", description_pouvoirs:"", image:"", pouvoirs_custom:[] as string[] };
+  const emptyForm = { nom:"", types:[] as string[], nb_pouvoirs:1, portee:5, controle:5, destruction:5, vitesse:5, regen:3, limite:5, description:"", description_pouvoirs:"", image:"", pouvoirs_custom:[] as string[], role:"civil" as PersonnageRole, nom_heros:"", danger_rank:"C" as DangerRank };
   const [form, setForm] = useState(emptyForm);
   const [persos, setPersos] = useState<Perso[]>(()=>loadFromStorage<Perso>("persos"));
   // Types de pouvoir ENTIÈREMENT créés par l'user, pas de défauts
@@ -1336,6 +1345,9 @@ function Createur() {
       ...form, id:editId||genId(), score,
       nom:sanitize(form.nom.trim()), description:sanitize(form.description.trim()),
       types: form.types.filter(t=>powerTypes.includes(t)),
+      nom_heros: sanitize(form.nom_heros.trim()),
+      danger_rank: form.danger_rank,
+      role: form.role,
     };
     if (editId) setPersos(ps=>ps.map(p=>p.id===editId?data:p));
     else setPersos(p=>[data,...p]);
@@ -1343,7 +1355,7 @@ function Createur() {
   };
 
   const startEdit = (p: Perso) => {
-    setForm({ nom:p.nom, types:p.types, nb_pouvoirs:p.nb_pouvoirs, portee:p.portee, controle:p.controle, destruction:p.destruction, vitesse:p.vitesse, regen:p.regen, limite:p.limite, description:p.description, description_pouvoirs:p.description_pouvoirs||"", image:p.image||"", pouvoirs_custom:p.pouvoirs_custom||[] });
+    setForm({ nom:p.nom, types:p.types, nb_pouvoirs:p.nb_pouvoirs, portee:p.portee, controle:p.controle, destruction:p.destruction, vitesse:p.vitesse, regen:p.regen, limite:p.limite, description:p.description, description_pouvoirs:p.description_pouvoirs||"", image:p.image||"", pouvoirs_custom:p.pouvoirs_custom||[], role:p.role||"civil", nom_heros:p.nom_heros||"", danger_rank:p.danger_rank||"C" });
     setEditId(p.id); setView("edit");
   };
 
@@ -1368,6 +1380,49 @@ function Createur() {
           <Card>
             <h3 style={{ color:"#f43f5e", marginTop:0 }}>{view==="edit"?"✏️ Modifier":"Infos du personnage"}</h3>
             <Input label="Nom" value={form.nom} onChange={v=>setForm(f=>({...f,nom:v}))} placeholder="ex: Shadow the Reaper" maxLen={MAX_SHORT} />
+
+            {/* Sélecteur de rôle */}
+            <div style={{ marginBottom:14 }}>
+              <label style={{ fontSize:12, color:"#aaa", display:"block", marginBottom:8 }}>Rôle</label>
+              <div style={{ display:"flex", gap:8 }}>
+                {([
+                  { key:"hero" as PersonnageRole, label:"🦸 Héros", color:"#22c55e" },
+                  { key:"civil" as PersonnageRole, label:"🧑 Civil", color:"#3b82f6" },
+                  { key:"vilain" as PersonnageRole, label:"💀 Vilain", color:"#ef4444" },
+                ]).map(r=>(
+                  <button key={r.key} onClick={()=>setForm(f=>({...f,role:r.key}))} style={{ flex:1, padding:"8px 0", borderRadius:8, border:`2px solid ${form.role===r.key?r.color:"#ffffff20"}`, background:form.role===r.key?r.color+"22":"#ffffff08", color:form.role===r.key?r.color:"#888", cursor:"pointer", fontSize:13, fontWeight:form.role===r.key?700:400, transition:"all 0.15s" }}>
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Champ nom de héros */}
+            {form.role==="hero" && (
+              <div style={{ marginBottom:14, background:"#22c55e0d", border:"1px solid #22c55e33", borderRadius:10, padding:"10px 14px" }}>
+                <Input label="🦸 Nom de héros / Alias" value={form.nom_heros} onChange={v=>setForm(f=>({...f,nom_heros:v}))} placeholder="ex: All Might, Deku, Spider-Man..." maxLen={MAX_SHORT} />
+              </div>
+            )}
+
+            {/* Niveau de danger pour les vilains */}
+            {form.role==="vilain" && (
+              <div style={{ marginBottom:14, background:"#ef44440d", border:"1px solid #ef444433", borderRadius:10, padding:"10px 14px" }}>
+                <label style={{ fontSize:12, color:"#aaa", display:"block", marginBottom:8 }}>☠️ Niveau de danger</label>
+                <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+                  {DANGER_RANKS.map(rank=>{
+                    const col = dangerRankColor[rank];
+                    const active = form.danger_rank===rank;
+                    return (
+                      <button key={rank} onClick={()=>setForm(f=>({...f,danger_rank:rank}))} style={{ padding:"6px 14px", borderRadius:8, border:`2px solid ${active?col:"#ffffff20"}`, background:active?col+"33":"#ffffff08", color:active?col:"#888", cursor:"pointer", fontSize:14, fontWeight:active?800:500, transition:"all 0.15s", letterSpacing:1 }}>
+                        {rank}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ fontSize:11, color:"#888", marginTop:6 }}>E = Faible menace → SSS = Catastrophe nationale</div>
+              </div>
+            )}
+
             <ImageUploader value={form.image} onChange={v=>setForm(f=>({...f,image:v}))} label="Image du personnage (optionnel)" />
             <Input label="Description" value={form.description} onChange={v=>setForm(f=>({...f,description:v}))} type="textarea" placeholder="Backstory, apparence..." maxLen={MAX_LONG} />
 
@@ -1532,11 +1587,29 @@ function Createur() {
                       <div key={p.id} style={{ background:`linear-gradient(160deg, #1a0010 0%, #0d0008 100%)`, border:`1.5px solid ${inf.color}44`, borderRadius:14, overflow:"hidden" }}>
                         <div style={{ height:120, background:p.image?"none":`${inf.color}11`, position:"relative" }}>
                           {p.image ? <img src={p.image} alt={p.nom} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-                            : <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100%", fontSize:40 }}>💀</div>}
+                            : <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100%", fontSize:40 }}>{p.role==="hero"?"🦸":p.role==="vilain"?"💀":"🧑"}</div>}
                           <div style={{ position:"absolute", bottom:0, left:0, right:0, height:40, background:"linear-gradient(transparent,#0d0008)" }} />
+                          {/* Badge rôle en haut à gauche */}
+                          <div style={{ position:"absolute", top:6, left:6 }}>
+                            {p.role==="hero" && <span style={{ background:"#22c55e33", border:"1px solid #22c55e88", borderRadius:6, padding:"2px 7px", fontSize:10, fontWeight:700, color:"#22c55e" }}>🦸 HÉROS</span>}
+                            {p.role==="civil" && <span style={{ background:"#3b82f633", border:"1px solid #3b82f688", borderRadius:6, padding:"2px 7px", fontSize:10, fontWeight:700, color:"#3b82f6" }}>🧑 CIVIL</span>}
+                            {p.role==="vilain" && <span style={{ background:"#ef444433", border:"1px solid #ef444488", borderRadius:6, padding:"2px 7px", fontSize:10, fontWeight:700, color:"#ef4444" }}>💀 VILAIN</span>}
+                          </div>
+                          {/* Niveau de danger pour les vilains */}
+                          {p.role==="vilain" && p.danger_rank && (
+                            <div style={{ position:"absolute", top:6, right:6 }}>
+                              <span style={{ background:dangerRankColor[p.danger_rank]+"44", border:`1.5px solid ${dangerRankColor[p.danger_rank]}`, borderRadius:6, padding:"2px 8px", fontSize:12, fontWeight:800, color:dangerRankColor[p.danger_rank], letterSpacing:1 }}>{p.danger_rank}</span>
+                            </div>
+                          )}
                         </div>
                         <div style={{ padding:"10px 12px" }}>
-                          <div style={{ fontWeight:700, fontSize:15, color:"#eee", marginBottom:4 }}>{p.nom}</div>
+                          <div style={{ fontWeight:700, fontSize:15, color:"#eee", marginBottom:2 }}>{p.nom}</div>
+                          {p.role==="hero" && p.nom_heros && (
+                            <div style={{ fontSize:12, color:"#22c55e", marginBottom:4, fontStyle:"italic" }}>✦ {p.nom_heros}</div>
+                          )}
+                          {p.role==="vilain" && p.danger_rank && (
+                            <div style={{ fontSize:12, color:dangerRankColor[p.danger_rank], marginBottom:4, fontWeight:700 }}>Danger : {p.danger_rank}</div>
+                          )}
                           <div style={{ display:"flex", flexWrap:"wrap", gap:4, marginBottom:8 }}>
                             {p.types.map(t=><Badge key={t} text={t} color={inf.color} />)}
                             {(p.pouvoirs_custom||[]).map((pc,i)=><Badge key={`pc${i}`} text={pc} color="#f43f5e" />)}
@@ -1578,7 +1651,22 @@ function Createur() {
               <Badge text={inf.label} color={inf.color} />
               <span style={{ fontSize:28, fontWeight:800, color:inf.color }}>{modalPerso.score}</span>
               <span style={{ fontSize:13, color:"#666" }}>/10</span>
+              {modalPerso.role==="hero" && <Badge text="🦸 Héros" color="#22c55e" />}
+              {modalPerso.role==="civil" && <Badge text="🧑 Civil" color="#3b82f6" />}
+              {modalPerso.role==="vilain" && <Badge text="💀 Vilain" color="#ef4444" />}
+              {modalPerso.role==="vilain" && modalPerso.danger_rank && (
+                <span style={{ background:dangerRankColor[modalPerso.danger_rank]+"33", border:`2px solid ${dangerRankColor[modalPerso.danger_rank]}`, borderRadius:8, padding:"3px 12px", fontSize:15, fontWeight:800, color:dangerRankColor[modalPerso.danger_rank], letterSpacing:2 }}>Danger {modalPerso.danger_rank}</span>
+              )}
             </div>
+            {modalPerso.role==="hero" && modalPerso.nom_heros && (
+              <div style={{ background:"#22c55e12", border:"1px solid #22c55e33", borderRadius:10, padding:"10px 14px", marginBottom:12, display:"flex", alignItems:"center", gap:10 }}>
+                <span style={{ fontSize:20 }}>🦸</span>
+                <div>
+                  <div style={{ fontSize:11, color:"#888" }}>Alias / Nom de héros</div>
+                  <div style={{ fontSize:16, fontWeight:700, color:"#22c55e" }}>{modalPerso.nom_heros}</div>
+                </div>
+              </div>
+            )}
             {modalPerso.types.length>0 && (
               <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:12 }}>
                 {modalPerso.types.map(t=><Badge key={t} text={t} color={inf.color} />)}
